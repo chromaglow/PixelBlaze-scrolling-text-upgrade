@@ -1,17 +1,52 @@
 /*
   Advanced Marquee Pattern v6
   
+  This pattern animates ASCII characters scrolling across an LED matrix.
+  
   Features:
-  - Sizes: Small, Med, Large, Full
+  - Sizes: Small, Med, Large, Full (Zoom control)
   - Colors: Solid, Rainbow, Gradient
   - Gradient: 3 Full Color Pickers
+  
+  Original Author: Jeff Vyduna (https://ngnr.org)
+  Bugfixes: Zeb (https://forum.electromage.com/u/zeb)
+  Updates (v3-v6): Added specific controls for Zoom, Gradients, and fixed rendering for Pixelblaze v3+.
+  
+  Performance Note:
+  This version uses a "redraw-every-frame" approach in render2D instead of a circular buffer.
+  On Pixelblaze v3, this is fast enough for standard matrices (e.g. 8x8 to 32x32) and prevents
+  buffer synchronization bugs when switching directions or sizes.
 */
 
 /* CONFIGURATION */
-var message = [
+// Exported for setting via webSockets
+// Javascript integers correspond to ASCII codes.
+export var message = [
     72, 101, 108, 108, 111, 32, // Hello 
     87, 111, 114, 108, 100, 33  // World!
-] // Modify this via Helper Tool
+]
+
+/* 
+  ASCII Chart
+
+  32      48 0    65 A   74 J    83 S    97  a    106 j    115 s
+  33 !    49 1    66 B   75 K    84 T    98  b    107 k    116 t
+  34 "    50 2    67 C   76 L    85 U    99  c    108 l    117 u
+  35 #    51 3    68 D   77 M    86 V    100 d    109 m    118 v
+  36 $    52 4    69 E   78 N    87 W    101 e    110 n    119 w
+  37 %    53 5    70 F   79 O    88 X    102 f    111 o    120 x
+  38 &    54 6    71 G   80 P    89 Y    103 g    112 p    121 y
+  39 '    55 7    72 H   81 Q    90 Z    104 h    113 q    122 z
+  40 (    56 8    73 I   82 R            105 i    114 r    
+  41 )    57 9                                   
+  42 *    58 :                   91 [                      123 {
+  43 +    59 ;                   92 \                      124 |
+  44 ,    60 <                   93 ]                      125 }
+  45 -    61 =                   94 ^                      126 ~
+  46 .    62 >                   95 _    
+  47 /    63 ?                   96 `                
+          64 @                                            
+*/
 
 /* ===========================
    UI CONTROLS
@@ -57,6 +92,17 @@ export function hsvPickerGradBot(h, s, v) { gBotH = h; gBotS = s; gBotV = v }
    LOGIC & RENDERING
    =========================== */
 
+/*
+  Font Implementation
+  
+  Pixelblaze currently supports up to 64 arrays with 2048 array elements.
+  To store a character set of 8x8 bit characters, we use 8 arrays, one for each row.
+  
+  Four 8-bit maps are packed into each 32 bit array element. This makes the
+  bitwise code a little hard to follow, but uses memory efficiently.
+  
+  See original script for packing diagram.
+*/
 var charRows = 8
 var fontCharCount = 128
 var fontBitmap = array(charRows)
