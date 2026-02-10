@@ -13,7 +13,7 @@ This project contains an advanced scrolling marquee pattern for Pixelblaze and a
     - **Size**: Small, Med, Large, Full.
     - **Color**: Solid, Rainbow, Gradient.
 - **`text_converter.html`**: A local web tool to convert text into ASCII arrays.
-  - **Theme**: "Hacker Noir" (Black/Green terminal style).
+  - **Features**: "Hacker Noir" theme, formatted output (multi-line), and "Copy to Clipboard" button.
 - **`Launch_Converter.bat`**: Script to launch the tool.
 - **`docs/`**: Reference documentation.
 

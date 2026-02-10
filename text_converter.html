@@ -102,9 +102,13 @@
         <h1>Pixelblaze Text Converter</h1>
         <p>Type your message below to generate the code array for your Pixelblaze.</p>
 
-        <textarea id="input" placeholder="Enter your text here...">Hello World!</textarea>
+        <textarea id="input" placeholder="Enter your text here...">Hello
+World!</textarea>
 
-        <button onclick="convert()">Generate Code</button>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="convert()">Generate Code</button>
+            <button onclick="copyOutput()">Copy to Clipboard</button>
+        </div>
         <div id="success" class="success">Copied to clipboard!</div>
 
         <pre id="output">// Result will appear here...</pre>
@@ -112,29 +116,48 @@
 
     <script>
         function convert() {
-            const text = document.getElementById('input').value;
-            let codes = [];
-            for (let i = 0; i < text.length; i++) {
-                let code = text.charCodeAt(i);
-                // ASCII range check (Pixelblaze standard font is ~32-126)
-                if (code >= 32 && code <= 126) {
-                    codes.push(code);
-                } else {
-                    // Fallback for unknowns (e.g. smart quotes)? Map to space (32)
-                    codes.push(32);
+            const rawText = document.getElementById('input').value;
+            // Split by newlines to preserve structure
+            const lines = rawText.split('\n');
+
+            let outputLines = [];
+
+            lines.forEach(line => {
+                if (line.length === 0) return; // Skip empty lines? Or keep them? Let's skip for cleanliness
+
+                let codes = [];
+                for (let i = 0; i < line.length; i++) {
+                    let code = line.charCodeAt(i);
+                    // ASCII range check (Pixelblaze standard font is ~32-126)
+                    if (code >= 32 && code <= 126) {
+                        codes.push(code);
+                    } else {
+                        codes.push(32); // Fallback to space
+                    }
                 }
-            }
 
-            // Format output nicely
-            const arrayString = `[${codes.join(', ')}]`;
-            const comment = `// ${text.replace(/\n/g, ' ')}`;
+                // Add newline character code (optional, but marquee usually ignores formatting. 
+                // We typically just want the visual separation in the code).
+                // Actually, let's just output the character codes for the visual line.
+                // If the user wants a space between words on lines, they need to type it.
+                // We'll treat newlines as "spaces" in the array flow? 
+                // A common convention is just to append the codes.
+                // We will add a space (32) at the end of a line if it's not the last line? 
+                // No, let's strictly convert characters.
 
-            const finalOutput = `var message = ${arrayString} ${comment}`;
+                if (codes.length > 0) {
+                    outputLines.push(`    ${codes.join(', ')}, // ${line}`);
+                }
+            });
+
+            const finalOutput = `export var message = [\n${outputLines.join('\n')}\n]`;
 
             document.getElementById('output').textContent = finalOutput;
+        }
 
-            // Auto copy
-            navigator.clipboard.writeText(finalOutput).then(() => {
+        function copyOutput() {
+            const text = document.getElementById('output').textContent;
+            navigator.clipboard.writeText(text).then(() => {
                 const msg = document.getElementById('success');
                 msg.style.display = 'block';
                 setTimeout(() => msg.style.display = 'none', 2000);
