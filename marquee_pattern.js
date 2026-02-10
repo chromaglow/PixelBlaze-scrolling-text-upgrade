@@ -52,17 +52,29 @@ export var message = [
    UI CONTROLS
    =========================== */
 
-export var speedVar = 1
+// --- SPEED & DIRECTION ---
+export var speedVar = 0.5 // Default reasonable speed
+export var direction = -1 // -1 = Left (Normal for this matrix), 1 = Right
 export function sliderSpeed(v) {
-    speedVar = 0.5 + (v * 4)
+    // Linear speed control (Range 0 to 5)
+    speedVar = v * 5
 }
+export function triggerLeftToRight() { direction = -1 }
+export function triggerRightToLeft() { direction = 1 }
 
 // --- SIZES ---
-export var scale = 1
-export function triggerSizeSmall() { scale = 1 }
-export function triggerSizeMedium() { scale = 2 }
-export function triggerSizeLarge() { scale = 3 }
-export function triggerSizeFull() { scale = 27 / 8 }
+export var patternScale = 1
+export function triggerSizeSmall() { patternScale = 1 }
+export function triggerSizeMedium() { patternScale = 2 }
+export function triggerSizeLarge() { patternScale = 3 }
+export function triggerSizeFull() { patternScale = 27 / 8 }
+
+// --- ORIENTATION ---
+export var vertical = 0
+export function triggerOrientationHorizontal() { vertical = 0 }
+export function triggerOrientationVertical() { vertical = 1 }
+
+// --- MIRRORING REMOVED (Hardcoded below)
 
 // --- COLORS ---
 export var colorMode = 0 // 0=Solid, 1=Rainbow, 2=Gradient
@@ -118,7 +130,8 @@ for (row = 0; row < matrixRows; row++) renderBuffer[row] = array(matrixCols)
 var scrollPos = 0
 
 export function beforeRender(delta) {
-    scrollPos += (delta / 50) * speedVar
+    // Standard scroll calculation
+    scrollPos += (delta / 50) * speedVar * direction
 
     // Clear
     for (r = 0; r < matrixRows; r++) {
@@ -126,20 +139,49 @@ export function beforeRender(delta) {
     }
 
     // Draw to buffer
-    var totalW = message.length * 8
-    var spaceW = matrixCols
-    var loopW = totalW + spaceW
     var shift = scrollPos
 
-    var startRow = floor((matrixRows - 8) / 2)
+    if (vertical) {
+        // VERTICAL STACK MODE
+        // Loop total height = message * 8
+        var totalH = message.length * 8
+        var loopH = totalH + matrixRows // Space between loops
 
-    for (var i = 0; i < message.length; i++) {
-        var charBaseX = (i * 8) - shift
-        var offset = charBaseX % loopW
-        if (offset < -totalW) offset += loopW
+        // Center horizontally
+        // 8 pixels wide. matrixCols is width.
+        var startCol = floor((matrixCols - 8) / 2)
 
-        if (offset > -8 && offset < matrixCols) {
-            drawChar(message[i], startRow, floor(offset))
+        for (var i = 0; i < message.length; i++) {
+            // Calculate Y position for this character
+            // Letters stack: 0, 8, 16...
+            var charBaseY = (i * 8) - shift
+
+            // Wrap loop
+            var offset = charBaseY % loopH
+            if (offset < -totalH) offset += loopH
+
+            // Draw if visible
+            // Note: offset is the Top row of the char
+            if (offset > -8 && offset < matrixRows) {
+                // drawChar(ascii, row, col)
+                drawChar(message[i], floor(offset), startCol)
+            }
+        }
+    } else {
+        // HORIZONTAL SCROLL MODE (Standard)
+        var totalW = message.length * 8
+        var loopW = totalW + matrixCols
+
+        var startRow = floor((matrixRows - 8) / 2)
+
+        for (var i = 0; i < message.length; i++) {
+            var charBaseX = (i * 8) - shift
+            var offset = charBaseX % loopW
+            if (offset < -totalW) offset += loopW
+
+            if (offset > -8 && offset < matrixCols) {
+                drawChar(message[i], startRow, floor(offset))
+            }
         }
     }
 }
@@ -162,13 +204,27 @@ function drawChar(ascii, rOffset, cOffset) {
 }
 
 export function render2D(index, x, y) {
-    // Zoom Logic
-    var cx = (x - 0.5) / scale + 0.5
-    var cy = (y - 0.5) / scale + 0.5
+    // Always map native visual coordinates
+    // We handle "Vertical Mode" by drawing differently to the buffer
+    renderMain(index, x, y)
+}
 
-    // Flip Y
+function renderMain(index, x, y) {
+    // Zoom Logic
+    var cx = (x - 0.5) / patternScale + 0.5
+    var cy = (y - 0.5) / patternScale + 0.5
+
+    // Hardcoded Fix: Mirror X Only
+    // Invert X to fix "Backwards". Y is left Native to fix "Upside Down".
+    cx = 1 - cx
+    // cy = 1 - cy  <-- REMOVED (Caused Upside Down)
+
+    // Flip Y (Removed because we are fixing the Matrix Map to be Top-Left 0,0)
+    // var r = floor(cy * (matrixRows - 0.001))
+    // r = (matrixRows - 1) - r  <-- REMOVED
+
+    // Standard mapping:
     var r = floor(cy * (matrixRows - 0.001))
-    r = (matrixRows - 1) - r
 
     var c = floor(cx * (matrixCols - 0.001))
 

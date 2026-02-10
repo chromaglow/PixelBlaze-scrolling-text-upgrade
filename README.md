@@ -5,10 +5,17 @@ This project contains an advanced scrolling marquee pattern for Pixelblaze and a
 ## Contents
 
 - **`marquee_pattern.js`**: The main Pixelblaze pattern code.
-  - Features: Multi-size (Small, Med, Large, Full), 4-Way Scrolling config (now locked to R->L for stability), Gradient/Rainbow/Solid color modes.
-- **`text_converter.html`**: A local web tool to convert text into the ASCII array format required by the pattern.
-- **`Launch_Converter.bat`**: A Windows batch script to launch the converter tool in your browser via a local server.
-- **`docs/`**: Reference documentation for Pixelblaze.
+  - **Vertical Mode**: Scrolls text vertically (stacked characters) so it remains upright and readable.
+  - **Orientation Fixes**: Hardcoded for specific matrix hardware (Flip X, Native Y, Reversed default direction).
+  - **Controls**: 
+    - **Speed**: Linear control (0 to 5), allowing full stop.
+    - **Direction**: "Left To Right" or "Right To Left".
+    - **Size**: Small, Med, Large, Full.
+    - **Color**: Solid, Rainbow, Gradient.
+- **`text_converter.html`**: A local web tool to convert text into ASCII arrays.
+  - **Theme**: "Hacker Noir" (Black/Green terminal style).
+- **`Launch_Converter.bat`**: Script to launch the tool.
+- **`docs/`**: Reference documentation.
 
 ## How to Use
 
@@ -19,14 +26,15 @@ This project contains an advanced scrolling marquee pattern for Pixelblaze and a
 4. Save the pattern.
 
 ### 2. Set the Message
-1. Double-click `Launch_Converter.bat` (Windows) or open `text_converter.html` in your browser.
+1. Double-click `Launch_Converter.bat` (Windows) or open `text_converter.html`.
 2. Type your message and click "Generate Code".
 3. Copy the generated line (e.g., `var message = [72, 101...]`).
 4. Replace the `var message = [...]` line at the top of your Pixelblaze pattern.
 
 ### 3. Controls
-In the Pixelblaze UI, you will see controls for:
-- **Speed**: Slider.
-- **Size**: Buttons for Small, Medium, Large, and Full Height.
-- **Color Mode**: Buttons for Solid, Rainbow, Gradient.
-- **Colors**: Pickers for Solid mode and for the 3-point Gradient (Top, Mid, Bottom).
+In the Pixelblaze UI:
+- **Speed**: Slider (Left=Stop, Right=Fast).
+- **Vertical**: Toggle for Vertical Stacking mode.
+- **Left To Right / Right To Left**: Change scroll direction.
+- **Size**: Buttons for text zoom.
+- **Color Mode**: Solid, Rainbow, Gradient.
